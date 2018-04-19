@@ -1,0 +1,176 @@
+
+***** CHANGE DIRECTORY AND SET PATH *****
+export PATH=~/bin:$PATH
+cd ~/fabric-samples/lrsnetwork
+
+
+***** GENERATE CRYPTO MATERIAL AND CHANNEL CONFIGURATION TRANSACTION USING CONFIG YAML FILES *****
+~/bin/cryptogen generate --config=./crypto-config.yaml
+export FABRIC_CFG_PATH=$PWD
+~/bin/configtxgen -profile ThreeOrgsOrdererGenesis -outputBlock ./channel-artifacts/genesis.block
+export CHANNEL_NAME=mychannel && ~/bin/configtxgen -profile ThreeOrgsChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID $CHANNEL_NAME
+
+
+***** CREATE CHANNEL CONFIGURATION TRANSACTION & DEFINE ANCHOR PEERS FOR EACH ORG USING CONFIG YAML FILES *****
+~/bin/configtxgen -profile ThreeOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/Org1MSPanchors.tx -channelID $CHANNEL_NAME -asOrg CitizenMSP
+~/bin/configtxgen -profile ThreeOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/Org2MSPanchors.tx -channelID $CHANNEL_NAME -asOrg RegistrarMSP
+~/bin/configtxgen -profile ThreeOrgsChannel -outputAnchorPeersUpdate ./channel-artifacts/Org3MSPanchors.tx -channelID $CHANNEL_NAME -asOrg EndorserMSP
+
+
+***** SET ENV-VARIABLE FOR PEER0.CITIZEN.ORG *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/users/Admin@citizen.org/msp
+CORE_PEER_ADDRESS=peer0.citizen.org:7051
+CORE_PEER_LOCALMSPID="CitizenMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/peers/peer0.citizen.org/tls/ca.crt
+
+
+***** CREATE CONTAINER USING CONFIGURATION FILE AND ENTER THE CLI *****
+IMAGE_TAG=x86_64-1.1.0 COMPOSE_PROJECT_NAME=lrsnetwork docker-compose -f docker-compose-cli.yaml -f docker-compose-couch.yaml up -d
+docker exec -it cli bash
+
+
+***** CREATE CHANNEL (NOTE ORDERER DOES THIS TRANSACTION) *****
+export CHANNEL_NAME=mychannel
+peer channel create -o orderer.example.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/channel.tx --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+
+
+***** JOIN PEER0.CITIZEN.ORG TO CHANNEL; UPDATE CHANNEL WITH ANCHOR PEER FOR CITIZEN ORG *****
+peer channel join -b mychannel.block
+peer channel update -o orderer.example.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/Org1MSPanchors.tx --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+
+
+***** JOIN PEER1.CITIZEN.ORG TO CHANNEL *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/users/Admin@citizen.org/msp
+CORE_PEER_ADDRESS=peer1.citizen.org:7051
+CORE_PEER_LOCALMSPID="CitizenMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/peers/peer1.citizen.org/tls/ca.crt
+peer channel join -b mychannel.block
+
+
+***** JOIN PEER2.CITIZEN.ORG TO CHANNEL *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/users/Admin@citizen.org/msp
+CORE_PEER_ADDRESS=peer2.citizen.org:7051
+CORE_PEER_LOCALMSPID="CitizenMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/peers/peer2.citizen.org/tls/ca.crt
+peer channel join -b mychannel.block
+
+
+***** JOIN PEER3.CITIZEN.ORG TO CHANNEL *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/users/Admin@citizen.org/msp
+CORE_PEER_ADDRESS=peer3.citizen.org:7051
+CORE_PEER_LOCALMSPID="CitizenMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/peers/peer3.citizen.org/tls/ca.crt
+peer channel join -b mychannel.block
+
+
+***** JOIN PEER0.REGISTRAR.ORG TO CHANNEL; UPDATE CHANNEL WITH ANCHOR PEER FOR REGISTRAR ORG *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/registrar.org/users/Admin@registrar.org/msp
+CORE_PEER_ADDRESS=peer0.registrar.org:7051
+CORE_PEER_LOCALMSPID="RegistrarMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/registrar.org/peers/peer0.registrar.org/tls/ca.crt
+peer channel join -b mychannel.block
+peer channel update -o orderer.example.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/Org2MSPanchors.tx --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+
+
+***** JOIN PEER1.REGISTRAR.ORG TO CHANNEL *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/registrar.org/users/Admin@registrar.org/msp
+CORE_PEER_ADDRESS=peer1.registrar.org:7051
+CORE_PEER_LOCALMSPID="RegistrarMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/registrar.org/peers/peer1.registrar.org/tls/ca.crt
+peer channel join -b mychannel.block
+
+
+***** JOIN PEER0.ENDORSER.ORG TO CHANNEL; UPDATE CHANNEL WITH ANCHOR PEER FOR ENDORSER ORG *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/endorser.org/users/Admin@endorser.org/msp
+CORE_PEER_ADDRESS=peer0.endorser.org:7051
+CORE_PEER_LOCALMSPID="EndorserMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/endorser.org/peers/peer0.endorser.org/tls/ca.crt
+peer channel join -b mychannel.block
+peer channel update -o orderer.example.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/Org3MSPanchors.tx --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+
+
+***** INSTALL CHAINCODE <<GOLANG>> ON PEER0.CITIZEN.ORG ON THE CHANNEL *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/users/Admin@citizen.org/msp
+CORE_PEER_ADDRESS=peer0.citizen.org:7051
+CORE_PEER_LOCALMSPID="CitizenMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/peers/peer0.citizen.org/tls/ca.crt
+peer chaincode install -n marbles -v 1.0 -l golang -p github.com/chaincode/marbles02/go/
+
+
+***** INSTALL CHAINCODE <<GOLANG>> ON PEER0.REGISTRAR.ORG ON THE CHANNEL *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/registrar.org/users/Admin@registrar.org/msp
+CORE_PEER_ADDRESS=peer0.registrar.org:7051
+CORE_PEER_LOCALMSPID="RegistrarMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/registrar.org/peers/peer0.registrar.org/tls/ca.crt
+peer chaincode install -n marbles -v 1.0 -l golang -p github.com/chaincode/marbles02/go/
+
+
+***** INSTALL CHAINCODE <<GOLANG>> ON PEER0.ENDORSER.ORG ON THE CHANNEL *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/endorser.org/users/Admin@endorser.org/msp
+CORE_PEER_ADDRESS=peer0.endorser.org:7051
+CORE_PEER_LOCALMSPID="EndorserMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/endorser.org/peers/peer0.endorser.org/tls/ca.crt
+peer chaincode install -n marbles -v 1.0 -l golang -p github.com/chaincode/marbles02/go/
+
+
+***** INSTANTIATE CHAINCODE <<GOLANG>> AND ENTER SAMPLE DATA USING PEER0.ENDORSER.ORG ON THE CHANNEL *****
+peer chaincode instantiate -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -l golang -v 1.0 -c '{"Args":["init"]}' -P 'OR ('\''CitizenMSP.peer'\'', '\''RegistrarMSP.peer'\'')'
+
+
+***** QUERY CHAINCODE USING PEER0.CITIZEN.ORG ON THE CHANNEL *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/users/Admin@citizen.org/msp
+CORE_PEER_ADDRESS=peer0.citizen.org:7051
+CORE_PEER_LOCALMSPID="CitizenMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/peers/peer0.citizen.org/tls/ca.crt
+peer chaincode query -C $CHANNEL_NAME -n marbles -c '{"Args":["readMarble","marble2"]}'
+
+
+***** INVOKE NEW TRANSACTION <<GOLANG>> USING PEER0.REGISTRAR.ORG ON THE CHANNEL *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/registrar.org/users/Admin@registrar.org/msp
+CORE_PEER_ADDRESS=peer0.registrar.org:7051
+CORE_PEER_LOCALMSPID="RegistrarMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/registrar.org/peers/peer0.registrar.org/tls/ca.crt
+peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["initMarble","marble1","blue","35","tom"]}'
+peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["initMarble","marble2","red","50","tom"]}'
+peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["initMarble","marble3","blue","70","tom"]}'
+peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["transferMarble","marble2","jerry"]}'
+peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["transferMarblesBasedOnColor","blue","jerry"]}'
+peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["delete","marble1"]}'
+
+
+***** QUERY CHAINCODE USING PEER1.CITIZEN.ORG ON THE CHANNEL [FIRST INSTALL CHAINCODE ON THIS NODE] *****
+CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/users/Admin@citizen.org/msp
+CORE_PEER_ADDRESS=peer1.citizen.org:7051
+CORE_PEER_LOCALMSPID="CitizenMSP"
+CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/peers/peer1.citizen.org/tls/ca.crt
+peer chaincode install -n marbles -v 1.0 -l golang -p github.com/chaincode/marbles02/go/
+peer chaincode query -C $CHANNEL_NAME -n marbles -c '{"Args":["getHistoryForMarble","marble1"]}'
+peer chaincode query -C $CHANNEL_NAME -n marbles -c '{"Args":["queryMarblesByOwner","jerry"]}'
+
+
+***** TO QUERY STATE DATABASE THROUGH COUCHDB WEB INTERFACE (FAUXTON) *****
+***** Open a browser and enter the url: http://localhost:5984/_utils *****
+
+
+***** TO START CLI AGAIN AFTER INACTIVITY *****
+docker start cli
+docker exec -it cli bash
+
+
+***** SEE CHAINCODE LOGS FOR PEERS *****
+
+docker logs dev-peer0.endorser.org-mycc-1.0
+## ex02 Init
+## Aval = 100, Bval = 200
+
+docker logs dev-peer0.citizen.org-mycc-1.0
+## ex02 Invoke
+## Query Response:{"Name":"a","Amount":"100"}
+
+docker logs dev-peer0.registrar.org-mycc-1.0
+## ex02 Invoke
+## Aval = 90, Bval = 210
+
+docker logs dev-peer1.citizen.org-mycc-1.0
+## ex02 Invoke
+## Query Response:{"Name":"a","Amount":"90"}
