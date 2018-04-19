@@ -1,7 +1,7 @@
 
 ***** CHANGE DIRECTORY AND SET PATH *****
 export PATH=~/bin:$PATH
-cd ~/fabric-samples/lrsnetwork
+cd ~/fabric-samples/lrsnetwork2
 
 
 ***** GENERATE CRYPTO MATERIAL AND CHANNEL CONFIGURATION TRANSACTION USING CONFIG YAML FILES *****
@@ -25,7 +25,7 @@ CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/c
 
 
 ***** CREATE CONTAINER USING CONFIGURATION FILE AND ENTER THE CLI *****
-IMAGE_TAG=x86_64-1.1.0 COMPOSE_PROJECT_NAME=lrsnetwork docker-compose -f docker-compose-cli.yaml -f docker-compose-couch.yaml up -d
+IMAGE_TAG=x86_64-1.1.0 COMPOSE_PROJECT_NAME=lrsnetwork2 docker-compose -f docker-compose-cli.yaml -f docker-compose-couch.yaml up -d
 docker exec -it cli bash
 
 
@@ -114,7 +114,7 @@ peer chaincode install -n marbles -v 1.0 -l golang -p github.com/chaincode/marbl
 
 
 ***** INSTANTIATE CHAINCODE <<GOLANG>> AND ENTER SAMPLE DATA USING PEER0.ENDORSER.ORG ON THE CHANNEL *****
-peer chaincode instantiate -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -l golang -v 1.0 -c '{"Args":["init"]}' -P 'OR ('\''CitizenMSP.peer'\'', '\''RegistrarMSP.peer'\'')'
+peer chaincode instantiate -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -l golang -v 1.0 -c '{"Args":["Init"]}' -P "OR ('CitizenMSP.peer', 'RegistrarMSP.peer')"
 
 
 ***** QUERY CHAINCODE USING PEER0.CITIZEN.ORG ON THE CHANNEL *****
