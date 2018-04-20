@@ -94,7 +94,7 @@ CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypt
 CORE_PEER_ADDRESS=peer0.citizen.org:7051
 CORE_PEER_LOCALMSPID="CitizenMSP"
 CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/peers/peer0.citizen.org/tls/ca.crt
-peer chaincode install -n marbles -v 1.0 -l golang -p github.com/chaincode/marbles02/go/
+peer chaincode install -n mycc -v 1.0 -l golang -p github.com/chaincode/chaincode_example02/go/
 
 
 ***** INSTALL CHAINCODE <<GOLANG>> ON PEER0.REGISTRAR.ORG ON THE CHANNEL *****
@@ -102,7 +102,7 @@ CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypt
 CORE_PEER_ADDRESS=peer0.registrar.org:7051
 CORE_PEER_LOCALMSPID="RegistrarMSP"
 CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/registrar.org/peers/peer0.registrar.org/tls/ca.crt
-peer chaincode install -n marbles -v 1.0 -l golang -p github.com/chaincode/marbles02/go/
+peer chaincode install -n mycc -v 1.0 -l golang -p github.com/chaincode/chaincode_example02/go/
 
 
 ***** INSTALL CHAINCODE <<GOLANG>> ON PEER0.ENDORSER.ORG ON THE CHANNEL *****
@@ -110,11 +110,11 @@ CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypt
 CORE_PEER_ADDRESS=peer0.endorser.org:7051
 CORE_PEER_LOCALMSPID="EndorserMSP"
 CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/endorser.org/peers/peer0.endorser.org/tls/ca.crt
-peer chaincode install -n marbles -v 1.0 -l golang -p github.com/chaincode/marbles02/go/
+peer chaincode install -n mycc -v 1.0 -l golang -p github.com/chaincode/chaincode_example02/go/
 
 
 ***** INSTANTIATE CHAINCODE <<GOLANG>> AND ENTER SAMPLE DATA USING PEER0.ENDORSER.ORG ON THE CHANNEL *****
-peer chaincode instantiate -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -l golang -v 1.0 -c '{"Args":["Init"]}' -P "OR ('CitizenMSP.peer', 'RegistrarMSP.peer')"
+peer chaincode instantiate -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n mycc -l golang -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "OR ('CitizenMSP.peer', 'RegistrarMSP.peer')"
 
 
 ***** QUERY CHAINCODE USING PEER0.CITIZEN.ORG ON THE CHANNEL *****
@@ -122,7 +122,7 @@ CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypt
 CORE_PEER_ADDRESS=peer0.citizen.org:7051
 CORE_PEER_LOCALMSPID="CitizenMSP"
 CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/peers/peer0.citizen.org/tls/ca.crt
-peer chaincode query -C $CHANNEL_NAME -n marbles -c '{"Args":["readMarble","marble2"]}'
+peer chaincode query -C $CHANNEL_NAME -n mycc -c '{"Args":["query","a"]}'
 
 
 ***** INVOKE NEW TRANSACTION <<GOLANG>> USING PEER0.REGISTRAR.ORG ON THE CHANNEL *****
@@ -130,12 +130,7 @@ CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypt
 CORE_PEER_ADDRESS=peer0.registrar.org:7051
 CORE_PEER_LOCALMSPID="RegistrarMSP"
 CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/registrar.org/peers/peer0.registrar.org/tls/ca.crt
-peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["initMarble","marble1","blue","35","tom"]}'
-peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["initMarble","marble2","red","50","tom"]}'
-peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["initMarble","marble3","blue","70","tom"]}'
-peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["transferMarble","marble2","jerry"]}'
-peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["transferMarblesBasedOnColor","blue","jerry"]}'
-peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n marbles -c '{"Args":["delete","marble1"]}'
+peer chaincode invoke -o orderer.example.com:7050 --tls --cafile /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem -C $CHANNEL_NAME -n mycc -c '{"Args":["invoke","a","b","10"]}'
 
 
 ***** QUERY CHAINCODE USING PEER1.CITIZEN.ORG ON THE CHANNEL [FIRST INSTALL CHAINCODE ON THIS NODE] *****
@@ -143,9 +138,8 @@ CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypt
 CORE_PEER_ADDRESS=peer1.citizen.org:7051
 CORE_PEER_LOCALMSPID="CitizenMSP"
 CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/citizen.org/peers/peer1.citizen.org/tls/ca.crt
-peer chaincode install -n marbles -v 1.0 -l golang -p github.com/chaincode/marbles02/go/
-peer chaincode query -C $CHANNEL_NAME -n marbles -c '{"Args":["getHistoryForMarble","marble1"]}'
-peer chaincode query -C $CHANNEL_NAME -n marbles -c '{"Args":["queryMarblesByOwner","jerry"]}'
+peer chaincode install -n mycc -v 1.0 -l golang -p github.com/chaincode/chaincode_example02/go/
+peer chaincode query -C $CHANNEL_NAME -n mycc -c '{"Args":["query","a"]}'
 
 
 ***** TO QUERY STATE DATABASE THROUGH COUCHDB WEB INTERFACE (FAUXTON) *****
